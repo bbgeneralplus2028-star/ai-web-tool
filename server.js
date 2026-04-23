@@ -4,49 +4,55 @@ import fetch from "node-fetch";
 const app = express();
 app.use(express.json());
 
-let logs = [];
-
-// ✅ ROOT (fixes error)
+// 🟢 ROOT CHECK (so browser doesn't show error)
 app.get("/", (req, res) => {
   res.send("✅ AI Backend Running");
 });
 
-// 📊 DASHBOARD
-app.get("/dashboard", (req, res) => {
-  res.json(logs);
-});
-
-// 🤖 AI ENDPOINT
+// 🧠 AI ENDPOINT (THIS FIXES /ai ISSUE)
 app.post("/ai", async (req, res) => {
-  const { prompt } = req.body;
-
-  logs.push({
-    time: new Date(),
-    prompt: prompt.slice(0,100)
-  });
-
   try {
-    const r = await fetch("https://api.openai.com/v1/chat/completions", {
-      method:"POST",
-      headers:{
-        "Authorization":`Bearer ${process.env.OPENAI_KEY}`,
-        "Content-Type":"application/json"
+    const { prompt } = req.body;
+
+    if (!prompt) {
+      return res.json({ error: "No prompt provided" });
+    }
+
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.OPENAI_KEY}`,
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model:"gpt-4o-mini",
-        messages:[{role:"user",content:prompt}]
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: prompt }]
       })
     });
 
-    const data = await r.json();
+    const data = await response.json();
 
     res.json({
-      result: data.choices?.[0]?.message?.content || "No response"
+      result: data.choices?.[0]?.message?.content || "No response from AI"
     });
 
-  } catch(e){
-    res.json({error:e.message});
+  } catch (err) {
+    res.json({
+      error: err.message
+    });
   }
 });
 
-app.listen(3000, ()=>console.log("Server running"));
+// 🟡 HEALTH CHECK (DEBUG TOOL)
+app.get("/health", (req, res) => {
+  res.json({
+    status: "ok",
+    time: new Date()
+  });
+});
+
+// 🚀 START SERVER (REQUIRED FOR RENDER)
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log("Server running on port", PORT);
+});
