@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>AI Browser Tool ULTRA</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+
+  <style>
+    body { font-family: sans-serif; text-align:center; padding:15px; }
+    textarea { width:95%; margin:5px 0; }
+    iframe { width:100%; height:250px; border:1px solid black; }
+    button { margin:5px; }
+  </style>
+</head>
+
+<body>
+
+<h2>🚀 AI Browser Tool ULTRA</h2>
+
+<!-- URL -->
+<input id="url" placeholder="https://example.com">
+<br>
+<button onclick="generateQR()">QR</button>
+<button onclick="openSite()">Open</button>
+
+<canvas id="qrcode"></canvas>
+
+<hr>
+
+<!-- HTML -->
+<h3>💻 HTML Runner</h3>
+<textarea id="htmlCode" rows="6"><h1>Hello</h1></textarea><br>
+<button onclick="runHTML()">Run HTML</button>
+
+<hr>
+
+<!-- JS -->
+<h3>⚙️ JS Runner</h3>
+<textarea id="jsCode" rows="6">alert("Hello JS")</textarea><br>
+<button onclick="runJS()">Run JS</button>
+
+<input type="file" accept=".js,.html" onchange="loadFile(event)">
+
+<hr>
+
+<!-- PAGE CONTROL -->
+<h3>✏️ Page Tools</h3>
+<button onclick="enableEdit()">Edit Page</button>
+<button onclick="enableHighlight()">Highlight</button>
+
+<hr>
+
+<!-- AI -->
+<h3>🤖 AI Tools</h3>
+<textarea id="aiInput" rows="6" placeholder="Paste script here..."></textarea><br>
+<button onclick="aiTranslate()">Translate</button>
+<button onclick="aiSummarize()">Summarize</button>
+<button onclick="scanRisk()">Scan Risk</button>
+
+<pre id="output"></pre>
+
+<hr>
+
+<iframe id="preview"></iframe>
+
+<script>
+// CONFIG
+const API_URL = "https://YOUR-BACKEND.onrender.com/ai";
+
+// URL FIX
+function fixURL(url){
+  if(!url.startsWith("http")) return "https://" + url;
+  return url;
+}
+
+// QR
+function generateQR(){
+  QRCode.toCanvas(qrcode, fixURL(url.value));
+}
+
+// OPEN
+function openSite(){
+  window.open(fixURL(url.value), "_blank");
+}
+
+// HTML
+function runHTML(){
+  preview.srcdoc = htmlCode.value;
+}
+
+// JS
+function runJS(){
+  try { new Function(jsCode.value)(); }
+  catch(e){ alert(e.message); }
+}
+
+// LOAD FILE
+function loadFile(e){
+  const file = e.target.files[0];
+  const reader = new FileReader();
+  reader.onload = e => {
+    if(file.name.endsWith(".js")) jsCode.value = e.target.result;
+    else htmlCode.value = e.target.result;
+  };
+  reader.readAsText(file);
+}
+
+// ✏️ EDIT PAGE
+function enableEdit(){
+  document.body.contentEditable = true;
+  alert("Edit mode ON");
+}
+
+// 🖍 HIGHLIGHT
+function enableHighlight(){
+  document.addEventListener("mouseup", () => {
+    let sel = window.getSelection();
+    if(sel.rangeCount){
+      let span = document.createElement("span");
+      span.style.background = "yellow";
+      try {
+        sel.getRangeAt(0).surroundContents(span);
+      } catch(e){}
+    }
+  });
+}
+
+// 🤖 AI CALL
+async function callAI(prompt){
+  const res = await fetch(API_URL,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({prompt})
+  });
+  return res.json();
+}
+
+// TRANSLATE
+async function aiTranslate(){
+  let res = await callAI("Translate this to English:\n" + aiInput.value);
+  output.innerText = res.result;
+}
+
+// SUMMARIZE
+async function aiSummarize(){
+  let res = await callAI("Explain this code:\n" + aiInput.value);
+  output.innerText = res.result;
+}
+
+// RISK SCAN
+function scanRisk(){
+  let t = aiInput.value;
+  let r = "";
+
+  if(t.includes("eval")) r += "⚠️ eval used\n";
+  if(t.includes("cookie")) r += "⚠️ accesses cookies\n";
+  if(t.includes("fetch")) r += "🌐 network request\n";
+  if(t.includes("localStorage")) r += "💾 local storage\n";
+
+  if(r==="") r="No major risks detected";
+  output.innerText = r;
+}
+</script>
+
+</body>
+</html>
