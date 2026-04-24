@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>AI Browser Tool ULTRA</title>
+  <title>AI Web Tool ULTRA</title>
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 </head>
 
 <body style="font-family:sans-serif;text-align:center;padding:15px;">
 
-<h2>🚀 AI Browser Tool</h2>
+<h2>🚀 AI Web Tool</h2>
 
 <input id="url" placeholder="https://example.com" style="width:90%">
 <br>
@@ -18,10 +18,10 @@
 
 <hr>
 
-<textarea id="htmlCode" style="width:95%;height:100px;"></textarea><br>
+<textarea id="htmlCode" placeholder="HTML here" style="width:95%;height:100px;"></textarea><br>
 <button onclick="runHTML()">Run HTML</button>
 
-<textarea id="jsCode" style="width:95%;height:100px;"></textarea><br>
+<textarea id="jsCode" placeholder="JS here" style="width:95%;height:100px;"></textarea><br>
 <button onclick="runJS()">Run JS</button>
 
 <input type="file" onchange="loadFile(event)">
@@ -33,19 +33,21 @@
 
 <hr>
 
-<textarea id="aiInput" style="width:95%;height:120px;"></textarea><br>
+<textarea id="aiInput" placeholder="Paste code or text..." style="width:95%;height:120px;"></textarea><br>
+
 <button onclick="aiTranslate()">Translate</button>
 <button onclick="aiSummarize()">Summarize</button>
 <button onclick="scanRisk()">Scan Risk</button>
+<button onclick="testAI()">Test AI</button>
 
 <pre id="output"></pre>
 
 <hr>
 
-<iframe id="preview" style="width:100%;height:250px;"></iframe>
+<iframe id="preview" style="width:100%;height:250px;border:1px solid black;"></iframe>
 
 <script>
-const API_URL = "https://ai-web-tool-1.onrender.com";
+const API_URL = "https://ai-web-tool-1.onrender.com/ai";
 
 function fixURL(u){ return u.startsWith("http") ? u : "https://" + u; }
 
@@ -90,13 +92,13 @@ async function callAI(prompt){
 }
 
 async function aiTranslate(){
-  let r = await callAI("Translate to English:\\n"+aiInput.value);
-  output.innerText = r.result;
+  let r = await callAI("Translate to English:\n"+aiInput.value);
+  output.innerText = r.result || JSON.stringify(r);
 }
 
 async function aiSummarize(){
-  let r = await callAI("Explain this code:\\n"+aiInput.value);
-  output.innerText = r.result;
+  let r = await callAI("Explain this code:\n"+aiInput.value);
+  output.innerText = r.result || JSON.stringify(r);
 }
 
 function scanRisk(){
@@ -107,6 +109,11 @@ function scanRisk(){
   if(t.includes("localStorage")) r+="💾 storage\n";
   if(!r) r="No major risks";
   output.innerText=r;
+}
+
+async function testAI(){
+  let r = await callAI("Say hello from Netlify");
+  alert(JSON.stringify(r));
 }
 </script>
 
