@@ -4,18 +4,33 @@ import fetch from "node-fetch";
 const app = express();
 app.use(express.json());
 
-// 🟢 ROOT CHECK (so browser doesn't show error)
+// ✅ ROOT ROUTE (TEST IN BROWSER)
 app.get("/", (req, res) => {
   res.send("✅ AI Backend Running");
 });
 
-// 🧠 AI ENDPOINT (THIS FIXES /ai ISSUE)
+// ✅ HEALTH CHECK
+app.get("/health", (req, res) => {
+  res.json({
+    status: "ok",
+    time: new Date(),
+    hasKey: !!process.env.OPENAI_KEY
+  });
+});
+
+// 🧠 AI ENDPOINT (FULL DEBUG + SAFE)
 app.post("/ai", async (req, res) => {
   try {
     const { prompt } = req.body;
 
     if (!prompt) {
-      return res.json({ error: "No prompt provided" });
+      return res.status(400).json({ error: "Missing prompt" });
+    }
+
+    if (!process.env.OPENAI_KEY) {
+      return res.status(500).json({
+        error: "OPENAI_KEY is missing on server"
+      });
     }
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -26,33 +41,43 @@ app.post("/ai", async (req, res) => {
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
-        messages: [{ role: "user", content: prompt }]
+        messages: [
+          { role: "user", content: prompt }
+        ]
       })
     });
 
     const data = await response.json();
 
-    res.json({
-      result: data.choices?.[0]?.message?.content || "No response from AI"
-    });
+    // 🔍 DEBUG: show full error if OpenAI fails
+    if (!response.ok) {
+      return res.status(500).json({
+        error: "OpenAI API error",
+        details: data
+      });
+    }
+
+    const result = data.choices?.[0]?.message?.content;
+
+    if (!result) {
+      return res.status(500).json({
+        error: "No response from AI",
+        raw: data
+      });
+    }
+
+    res.json({ result });
 
   } catch (err) {
-    res.json({
-      error: err.message
+    res.status(500).json({
+      error: "Server error",
+      message: err.message
     });
   }
 });
 
-// 🟡 HEALTH CHECK (DEBUG TOOL)
-app.get("/health", (req, res) => {
-  res.json({
-    status: "ok",
-    time: new Date()
-  });
-});
-
-// 🚀 START SERVER (REQUIRED FOR RENDER)
+// 🚀 START SERVER
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log("Server running on port", PORT);
+  console.log("✅ Server running on port", PORT);
 });
