@@ -1,19 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>AI SaaS ULTRA</title>
+  <title>AI SaaS ULTRA (Render)</title>
 
   <!-- QR -->
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
-
   <style>
     body { margin:0; font-family:sans-serif; background:#111; color:white; }
-    #top { padding:10px; background:#000; }
+    #top { padding:10px; background:#000; text-align:center; }
     #chat { height:300px; overflow:auto; border:1px solid #333; padding:10px; }
     .msg { margin:5px; padding:8px; border-radius:8px; }
     .user { background:#333; }
@@ -26,22 +21,11 @@
 <body>
 
 <div id="top">
-  <h2>🚀 AI SaaS ULTRA</h2>
+  <h2>🚀 AI SaaS ULTRA (Render)</h2>
 </div>
 
-<!-- LOGIN -->
-<div id="loginBox">
-  <input id="email" placeholder="Email">
-  <input id="password" type="password" placeholder="Password">
-  <button onclick="signup()">Sign Up</button>
-  <button onclick="login()">Login</button>
-</div>
-
-<!-- APP -->
-<div id="app" style="display:none;">
-
-  <button onclick="logout()">Logout</button>
-  <button onclick="upgrade()">💳 Upgrade</button>
+<!-- APP (NO LOGIN VERSION FOR STABILITY FIRST) -->
+<div id="app">
 
   <!-- CHAT -->
   <div id="chat"></div>
@@ -84,55 +68,27 @@
 
 <script>
 
-// ===== CONFIG =====
-const API_URL = "https://ai-web-tool-1.onrender.com/ai";
-
-// 🔥 PASTE YOUR FIREBASE CONFIG HERE
-const firebaseConfig = {
-  apiKey: "PASTE",
-  authDomain: "PASTE",
-  projectId: "PASTE"
-};
-
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-
-// ===== AUTH =====
-function signup(){ auth.createUserWithEmailAndPassword(email.value,password.value); }
-function login(){ auth.signInWithEmailAndPassword(email.value,password.value); }
-function logout(){ auth.signOut(); }
-
-auth.onAuthStateChanged(user=>{
-  if(user){
-    loginBox.style.display="none";
-    app.style.display="block";
-    loadChat();
-  } else {
-    loginBox.style.display="block";
-    app.style.display="none";
-  }
-});
+// ✅ SAME DOMAIN API
+const API_URL = "/ai";
 
 // ===== CHAT =====
 async function send(textOverride){
+  const input = document.getElementById("input");
   const text = textOverride || input.value;
   if(!text) return;
 
-  const user = auth.currentUser;
-
-  addMsg("You: "+text,"user");
+  addMsg("You: " + text, "user");
 
   const res = await fetch(API_URL,{
     method:"POST",
     headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({prompt:text, uid:user.uid})
+    body: JSON.stringify({prompt:text})
   });
 
   const data = await res.json();
   const reply = data.result || "Error";
 
-  addMsg("AI: "+reply,"ai");
+  addMsg("AI: " + reply, "ai");
   speak(reply);
 
   input.value="";
@@ -143,6 +99,7 @@ function addMsg(text,type){
   div.className="msg "+type;
   div.innerText=text;
   chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
 }
 
 // ===== VOICE =====
@@ -205,13 +162,6 @@ function enableHighlight(){
       try{s.getRangeAt(0).surroundContents(span);}catch(e){}
     }
   });
-}
-
-// ===== PAY =====
-async function upgrade(){
-  const res=await fetch("https://ai-web-tool-1.onrender.com/create-checkout",{method:"POST"});
-  const data=await res.json();
-  window.location=data.url;
 }
 
 </script>
