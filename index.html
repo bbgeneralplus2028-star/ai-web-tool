@@ -1,79 +1,204 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>AI Web Tool ULTRA</title>
+  <title>AI SaaS ULTRA</title>
+
+  <!-- QR -->
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+
+  <style>
+    body { margin:0; font-family:sans-serif; background:#111; color:white; }
+    #top { padding:10px; background:#000; }
+    #chat { height:300px; overflow:auto; border:1px solid #333; padding:10px; }
+    .msg { margin:5px; padding:8px; border-radius:8px; }
+    .user { background:#333; }
+    .ai { background:#1e3a8a; }
+    textarea,input,button { margin:5px; padding:8px; width:95%; }
+    iframe { width:100%; height:200px; border:1px solid #444; }
+  </style>
 </head>
 
-<body style="font-family:sans-serif;text-align:center;padding:15px;">
+<body>
 
-<h2>🚀 AI Web Tool</h2>
+<div id="top">
+  <h2>🚀 AI SaaS ULTRA</h2>
+</div>
 
-<input id="url" placeholder="https://example.com" style="width:90%">
-<br>
-<button onclick="generateQR()">QR</button>
-<button onclick="openSite()">Open</button>
+<!-- LOGIN -->
+<div id="loginBox">
+  <input id="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
+  <button onclick="signup()">Sign Up</button>
+  <button onclick="login()">Login</button>
+</div>
 
-<canvas id="qrcode"></canvas>
+<!-- APP -->
+<div id="app" style="display:none;">
 
-<hr>
+  <button onclick="logout()">Logout</button>
+  <button onclick="upgrade()">💳 Upgrade</button>
 
-<textarea id="htmlCode" placeholder="HTML here" style="width:95%;height:100px;"></textarea><br>
-<button onclick="runHTML()">Run HTML</button>
+  <!-- CHAT -->
+  <div id="chat"></div>
+  <input id="input" placeholder="Ask AI...">
+  <button onclick="send()">Send</button>
+  <button onclick="startVoice()">🎤 Speak</button>
+  <button onclick="startVoiceContinuous()">🎤 Auto</button>
 
-<textarea id="jsCode" placeholder="JS here" style="width:95%;height:100px;"></textarea><br>
-<button onclick="runJS()">Run JS</button>
+  <hr>
 
-<input type="file" onchange="loadFile(event)">
+  <!-- WEB -->
+  <input id="url" placeholder="https://example.com">
+  <button onclick="openSite()">Open</button>
+  <button onclick="generateQR()">QR</button>
+  <canvas id="qrcode"></canvas>
 
-<hr>
+  <hr>
 
-<button onclick="enableEdit()">Edit Page</button>
-<button onclick="enableHighlight()">Highlight</button>
+  <!-- HTML / JS -->
+  <textarea id="htmlCode" placeholder="HTML"></textarea>
+  <button onclick="runHTML()">Run HTML</button>
 
-<hr>
+  <textarea id="jsCode" placeholder="JS"></textarea>
+  <button onclick="runJS()">Run JS</button>
 
-<textarea id="aiInput" placeholder="Paste code or text..." style="width:95%;height:120px;"></textarea><br>
+  <iframe id="preview"></iframe>
 
-<button onclick="aiTranslate()">Translate</button>
-<button onclick="aiSummarize()">Summarize</button>
-<button onclick="scanRisk()">Scan Risk</button>
-<button onclick="testAI()">Test AI</button>
+  <hr>
 
-<pre id="output"></pre>
+  <!-- FILE -->
+  <input type="file" onchange="uploadFile(event)">
 
-<hr>
+  <hr>
 
-<iframe id="preview" style="width:100%;height:250px;border:1px solid black;"></iframe>
+  <!-- EDIT -->
+  <button onclick="enableEdit()">Edit Page</button>
+  <button onclick="enableHighlight()">Highlight</button>
+
+</div>
 
 <script>
+
+// ===== CONFIG =====
 const API_URL = "https://ai-web-tool-1.onrender.com/ai";
 
-function fixURL(u){ return u.startsWith("http") ? u : "https://" + u; }
+// 🔥 PASTE YOUR FIREBASE CONFIG HERE
+const firebaseConfig = {
+  apiKey: "PASTE",
+  authDomain: "PASTE",
+  projectId: "PASTE"
+};
 
-function generateQR(){ QRCode.toCanvas(qrcode, fixURL(url.value)); }
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-function openSite(){ window.open(fixURL(url.value)); }
+// ===== AUTH =====
+function signup(){ auth.createUserWithEmailAndPassword(email.value,password.value); }
+function login(){ auth.signInWithEmailAndPassword(email.value,password.value); }
+function logout(){ auth.signOut(); }
 
-function runHTML(){ preview.srcdoc = htmlCode.value; }
+auth.onAuthStateChanged(user=>{
+  if(user){
+    loginBox.style.display="none";
+    app.style.display="block";
+    loadChat();
+  } else {
+    loginBox.style.display="block";
+    app.style.display="none";
+  }
+});
 
-function runJS(){ try{ new Function(jsCode.value)(); } catch(e){ alert(e.message); } }
+// ===== CHAT =====
+async function send(textOverride){
+  const text = textOverride || input.value;
+  if(!text) return;
 
-function loadFile(e){
-  const f = e.target.files[0];
-  const r = new FileReader();
-  r.onload = e => {
-    if(f.name.endsWith(".js")) jsCode.value = e.target.result;
-    else htmlCode.value = e.target.result;
+  const user = auth.currentUser;
+
+  addMsg("You: "+text,"user");
+
+  const res = await fetch(API_URL,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({prompt:text, uid:user.uid})
+  });
+
+  const data = await res.json();
+  const reply = data.result || "Error";
+
+  addMsg("AI: "+reply,"ai");
+  speak(reply);
+
+  input.value="";
+}
+
+function addMsg(text,type){
+  const div=document.createElement("div");
+  div.className="msg "+type;
+  div.innerText=text;
+  chat.appendChild(div);
+}
+
+// ===== VOICE =====
+function speak(t){
+  speechSynthesis.speak(new SpeechSynthesisUtterance(t));
+}
+
+function startVoice(){
+  const SR=window.SpeechRecognition||webkitSpeechRecognition;
+  const r=new SR();
+  r.start();
+  r.onresult=e=>{
+    send(e.results[0][0].transcript);
+  };
+}
+
+function startVoiceContinuous(){
+  const SR=window.SpeechRecognition||webkitSpeechRecognition;
+  const r=new SR();
+  r.continuous=true;
+  r.onresult=e=>{
+    send(e.results[e.results.length-1][0].transcript);
+  };
+  r.start();
+}
+
+// ===== WEB =====
+function fixURL(u){return u.startsWith("http")?u:"https://"+u;}
+function openSite(){window.open(fixURL(url.value));}
+function generateQR(){QRCode.toCanvas(qrcode,fixURL(url.value));}
+
+// ===== CODE =====
+function runHTML(){preview.srcdoc=htmlCode.value;}
+function runJS(){try{new Function(jsCode.value)();}catch(e){alert(e);}}
+
+// ===== FILE =====
+function uploadFile(e){
+  const f=e.target.files[0];
+  const r=new FileReader();
+  r.onload=async()=>{
+    const res=await fetch(API_URL,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({prompt:"Explain this:\n"+r.result})
+    });
+    const data=await res.json();
+    alert(data.result);
   };
   r.readAsText(f);
 }
 
-function enableEdit(){ document.body.contentEditable = true; }
-
+// ===== EDIT =====
+function enableEdit(){document.body.contentEditable=true;}
 function enableHighlight(){
-  document.addEventListener("mouseup", ()=>{
-    let s = window.getSelection();
+  document.addEventListener("mouseup",()=>{
+    let s=getSelection();
     if(s.rangeCount){
       let span=document.createElement("span");
       span.style.background="yellow";
@@ -82,39 +207,13 @@ function enableHighlight(){
   });
 }
 
-async function callAI(prompt){
-  const r = await fetch(API_URL,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({prompt})
-  });
-  return r.json();
+// ===== PAY =====
+async function upgrade(){
+  const res=await fetch("https://ai-web-tool-1.onrender.com/create-checkout",{method:"POST"});
+  const data=await res.json();
+  window.location=data.url;
 }
 
-async function aiTranslate(){
-  let r = await callAI("Translate to English:\n"+aiInput.value);
-  output.innerText = r.result || JSON.stringify(r);
-}
-
-async function aiSummarize(){
-  let r = await callAI("Explain this code:\n"+aiInput.value);
-  output.innerText = r.result || JSON.stringify(r);
-}
-
-function scanRisk(){
-  let t = aiInput.value, r="";
-  if(t.includes("eval")) r+="⚠️ eval used\n";
-  if(t.includes("cookie")) r+="⚠️ cookies\n";
-  if(t.includes("fetch")) r+="🌐 network\n";
-  if(t.includes("localStorage")) r+="💾 storage\n";
-  if(!r) r="No major risks";
-  output.innerText=r;
-}
-
-async function testAI(){
-  let r = await callAI("Say hello from Netlify");
-  alert(JSON.stringify(r));
-}
 </script>
 
 </body>
