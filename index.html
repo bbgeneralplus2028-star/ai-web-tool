@@ -1,77 +1,180 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>AI Browser</title>
+  <title>AI FULL SYSTEM + API TESTER</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 
   <style>
-    body { font-family: Arial; text-align: center; padding: 20px; background:#111; color:white; }
-    input { width: 80%; padding: 10px; }
-    button { padding: 10px 15px; margin: 5px; }
-    #chat { margin-top: 20px; text-align: left; max-width: 600px; margin-left:auto; margin-right:auto; }
-    .msg { padding: 10px; margin: 5px; border-radius: 8px; }
+    body { font-family: Arial; text-align: center; padding: 15px; background:#111; color:white; }
+    input, textarea, select { width: 90%; padding: 10px; margin: 5px; }
+    button { padding: 10px; margin: 5px; cursor:pointer; }
+    iframe { width: 95%; height: 280px; border: 2px solid #444; margin-top: 10px; }
+    #chat { max-width:600px; margin:auto; text-align:left; }
+    .msg { padding:8px; margin:5px; border-radius:6px; }
     .user { background:#333; }
     .ai { background:#1e3a8a; }
+    pre { text-align:left; white-space:pre-wrap; }
   </style>
 </head>
 
 <body>
 
-<h2>🤖 AI Browser Chat</h2>
+<h2>🚀 AI FULL SYSTEM (ALL-IN-ONE)</h2>
+
+<!-- ================= AI CHAT ================= -->
+<div id="chat"></div>
 
 <input id="msg" placeholder="Ask AI...">
 <br>
+<button onclick="sendAI()">Send AI</button>
 
-<button onclick="send()">Send</button>
+<hr>
 
-<div id="chat"></div>
+<!-- ================= WEB TOOL ================= -->
+<input id="url" placeholder="https://example.com">
+<br>
+<button onclick="openSite()">🌍 Open</button>
+<button onclick="embedSite()">📱 Embed</button>
+
+<hr>
+
+<!-- ================= HTML RUNNER ================= -->
+<textarea id="htmlCode" placeholder="<h1>Hello</h1>"></textarea>
+<br>
+<button onclick="runHTML()">▶ Run HTML</button>
+<button onclick="clearFrame()">🧹 Clear</button>
+
+<hr>
+
+<!-- ================= QR SYSTEM ================= -->
+<input id="qrInput" placeholder="Enter URL">
+<br>
+<button onclick="qrNormal()">🌐 QR</button>
+<button onclick="qrAI()">🤖 AI QR</button>
+
+<canvas id="qr"></canvas>
+<p id="qrInfo"></p>
+
+<hr>
+
+<!-- ================= API TESTER (POSTMAN) ================= -->
+<h3>🧪 API TESTER (My Postman)</h3>
+
+<input id="apiUrl" placeholder="https://your-app.onrender.com/ai">
+
+<br>
+
+<select id="method">
+  <option>POST</option>
+  <option>GET</option>
+</select>
+
+<br>
+
+<textarea id="body" placeholder='{"prompt":"hello"}'></textarea>
+
+<br>
+
+<button onclick="sendRequest()">🚀 Send Request</button>
+
+<pre id="response"></pre>
+
+<hr>
+
+<!-- ================= OUTPUT ================= -->
+<iframe id="preview"></iframe>
 
 <script>
 
-// ======================
-// 🔗 YOUR BACKEND (Render)
-// ======================
-const API_URL = "/ai"; 
-// OR: "https://your-app.onrender.com/ai"
+// ================= AI =================
+const API_URL = "/ai";
 
-// ======================
-// 💬 ADD MESSAGE
-// ======================
-function addMsg(text, type){
-  const div = document.createElement("div");
-  div.className = "msg " + type;
-  div.innerText = text;
+function addMsg(text,type){
+  const div=document.createElement("div");
+  div.className="msg "+type;
+  div.innerText=text;
   document.getElementById("chat").appendChild(div);
 }
 
-// ======================
-// 🤖 SEND TO AI
-// ======================
-async function send(){
-  const input = document.getElementById("msg");
-  const text = input.value;
-
+async function sendAI(){
+  const text=document.getElementById("msg").value;
   if(!text) return;
 
-  addMsg("You: " + text, "user");
-  input.value = "";
+  addMsg("You: "+text,"user");
 
-  addMsg("AI: thinking...", "ai");
+  const res=await fetch(API_URL,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({prompt:text})
+  });
 
-  try {
-    const res = await fetch(API_URL, {
-      method:"POST",
+  const data=await res.json();
+
+  addMsg("AI: "+(data.result||"error"),"ai");
+}
+
+// ================= WEB =================
+function fix(u){
+  return u.startsWith("http")?u:"https://"+u;
+}
+
+function openSite(){
+  let u=fix(document.getElementById("url").value);
+  window.open(u,"_blank");
+}
+
+function embedSite(){
+  let u=fix(document.getElementById("url").value);
+  document.getElementById("preview").src=u;
+}
+
+// ================= HTML RUN =================
+function runHTML(){
+  document.getElementById("preview").srcdoc =
+    document.getElementById("htmlCode").value;
+}
+
+function clearFrame(){
+  document.getElementById("preview").src="";
+  document.getElementById("preview").srcdoc="";
+}
+
+// ================= QR =================
+function qrNormal(){
+  let u=fix(document.getElementById("qrInput").value);
+  QRCode.toCanvas(document.getElementById("qr"),u);
+  document.getElementById("qrInfo").innerText="🌐 Normal QR";
+}
+
+function qrAI(){
+  let u="https://your-app.onrender.com/ai-mode";
+  QRCode.toCanvas(document.getElementById("qr"),u);
+  document.getElementById("qrInfo").innerText="🤖 AI QR Mode";
+}
+
+// ================= API TESTER =================
+async function sendRequest(){
+  const url=document.getElementById("apiUrl").value;
+  const method=document.getElementById("method").value;
+  const body=document.getElementById("body").value;
+
+  document.getElementById("response").innerText="Loading...";
+
+  try{
+    const res=await fetch(url,{
+      method:method,
       headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ prompt: text })
+      body: method==="POST"?body:null
     });
 
-    const data = await res.json();
+    const data=await res.json();
 
-    // remove "thinking..."
-    document.querySelectorAll(".ai")[document.querySelectorAll(".ai").length-1]
-      .innerText = "AI: " + (data.result || "No response");
+    document.getElementById("response").innerText=
+      "STATUS: "+res.status+"\n\n"+JSON.stringify(data,null,2);
 
-  } catch(err){
-    addMsg("Error: " + err.message, "ai");
+  }catch(e){
+    document.getElementById("response").innerText="ERROR: "+e.message;
   }
 }
 
