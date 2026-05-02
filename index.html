@@ -22,16 +22,15 @@
 
 <h2>🚀 AI FULL SYSTEM PRO</h2>
 
-<!-- ================= AI CHAT ================= -->
+<!-- AI CHAT -->
 <div id="chat"></div>
-
 <input id="msg" placeholder="Ask AI...">
 <br>
 <button onclick="sendAI()">Send AI</button>
 
 <hr>
 
-<!-- ================= WEB TOOL ================= -->
+<!-- WEB TOOL -->
 <input id="url" placeholder="https://example.com">
 <br>
 <button onclick="openSite()">🌍 Open</button>
@@ -39,7 +38,7 @@
 
 <hr>
 
-<!-- ================= HTML RUNNER ================= -->
+<!-- HTML RUNNER -->
 <textarea id="htmlCode" placeholder="<h1>Hello</h1>"></textarea>
 <br>
 <button onclick="runHTML()">▶ Run HTML</button>
@@ -47,21 +46,20 @@
 
 <hr>
 
-<!-- ================= QR SYSTEM ================= -->
+<!-- QR -->
 <input id="qrInput" placeholder="Enter URL">
 <br>
 <button onclick="qrNormal()">🌐 QR</button>
 <button onclick="qrAI()">🤖 AI QR</button>
-
 <canvas id="qr"></canvas>
 <p id="qrInfo"></p>
 
 <hr>
 
-<!-- ================= API TESTER ================= -->
+<!-- API TESTER -->
 <h3>🧪 API TESTER (My Postman)</h3>
 
-<input id="apiUrl" placeholder="https://ai-web-tool-1.onrender.com/ai">
+<input id="apiUrl" placeholder="/ai OR full https:// URL">
 
 <select id="method">
   <option>POST</option>
@@ -76,12 +74,11 @@
 
 <hr>
 
-<!-- ================= OUTPUT ================= -->
 <iframe id="preview"></iframe>
 
 <script>
 
-// ================= AI =================
+// ================= AI CHAT =================
 const API_URL = "/ai";
 
 function addMsg(text,type){
@@ -168,15 +165,17 @@ async function sendRequest(){
   output.innerText = "⏳ Sending...";
 
   try{
-    // ✅ Validate URL
-    new URL(url);
+    // ✅ Allow BOTH /ai and full URLs
+    if(!url.startsWith("/")){
+      new URL(url);
+    }
 
     let options = {
       method: method,
       headers: {"Content-Type":"application/json"}
     };
 
-    // ✅ Validate JSON BEFORE sending
+    // ✅ JSON validation
     if(method !== "GET" && bodyText){
       try{
         JSON.parse(bodyText);
