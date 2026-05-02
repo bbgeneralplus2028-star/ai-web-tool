@@ -1,33 +1,98 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
+require("dotenv").config();
 
 const app = express();
 
+// =====================
+// MIDDLEWARE
+// =====================
 app.use(cors());
 app.use(express.json());
+app.use(express.static(__dirname));
 
-// ✅ ROOT TEST
+// =====================
+// 🌐 HOME (FRONTEND)
+// =====================
 app.get("/", (req, res) => {
-  res.send("🚀 SERVER IS LIVE");
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// ✅ HEALTH CHECK
+// =====================
+// 🤖 AI MODE PAGE (QR TARGET)
+// =====================
+app.get("/ai-mode", (req, res) => {
+  res.send(`
+    <h1>🤖 AI Assistant Mode</h1>
+    <p>Welcome to AI launch page</p>
+
+    <a href="shortcuts://run-shortcut?name=AI Assistant">
+      ▶ Open Siri Shortcut
+    </a>
+
+    <br><br>
+
+    <a href="/">⬅ Back to App</a>
+  `);
+});
+
+// =====================
+// 🤖 AI ENDPOINT
+// =====================
+app.post("/ai", async (req, res) => {
+  try {
+    const { prompt } = req.body;
+
+    const OPENAI_KEY = process.env.OPENAI_KEY;
+
+    if (!OPENAI_KEY) {
+      return res.status(500).json({
+        error: "OPENAI_KEY missing in environment variables"
+      });
+    }
+
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${OPENAI_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    const data = await response.json();
+
+    const reply =
+      data.choices?.[0]?.message?.content ||
+      "No AI response";
+
+    res.json({ result: reply });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// =====================
+// ❤️ HEALTH CHECK
+// =====================
 app.get("/health", (req, res) => {
-  res.json({ status: "ok", time: new Date() });
-});
-
-// ✅ AI TEST ROUTE (SAFE PLACEHOLDER)
-app.post("/ai", (req, res) => {
-  const prompt = req.body?.prompt || "empty";
-
   res.json({
-    result: "AI received: " + prompt
+    status: "ok",
+    time: new Date().toISOString()
   });
 });
 
-// ✅ START SERVER (IMPORTANT)
+// =====================
+// 🚀 START SERVER
+// =====================
 const PORT = process.env.PORT || 10000;
 
 app.listen(PORT, () => {
-  console.log("Server running on port", PORT);
+  console.log("✅ AI SERVER RUNNING ON PORT", PORT);
 });
