@@ -1,167 +1,68 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>AI SaaS ULTRA (Render)</title>
-
-  <!-- QR -->
-  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <title>AI Web Runner Test</title>
 
   <style>
-    body { margin:0; font-family:sans-serif; background:#111; color:white; }
-    #top { padding:10px; background:#000; text-align:center; }
-    #chat { height:300px; overflow:auto; border:1px solid #333; padding:10px; }
-    .msg { margin:5px; padding:8px; border-radius:8px; }
-    .user { background:#333; }
-    .ai { background:#1e3a8a; }
-    textarea,input,button { margin:5px; padding:8px; width:95%; }
-    iframe { width:100%; height:200px; border:1px solid #444; }
+    body { font-family: sans-serif; text-align: center; padding: 20px; }
+    textarea, input { width: 90%; padding: 10px; margin: 5px; }
+    iframe { width: 95%; height: 300px; border: 2px solid black; margin-top: 10px; }
+    button { padding: 10px 15px; margin: 5px; }
   </style>
 </head>
 
 <body>
 
-<div id="top">
-  <h2>🚀 AI SaaS ULTRA (Render)</h2>
-</div>
+<h2>🧪 HTML + Web Runner Test</h2>
 
-<!-- APP (NO LOGIN VERSION FOR STABILITY FIRST) -->
-<div id="app">
+<!-- 🌐 INTERNET URL -->
+<input id="url" placeholder="https://example.com">
+<br>
 
-  <!-- CHAT -->
-  <div id="chat"></div>
-  <input id="input" placeholder="Ask AI...">
-  <button onclick="send()">Send</button>
-  <button onclick="startVoice()">🎤 Speak</button>
-  <button onclick="startVoiceContinuous()">🎤 Auto</button>
+<button onclick="openSite()">🌍 Open Website</button>
+<button onclick="embedSite()">📱 Embed Site</button>
 
-  <hr>
+<br><br>
 
-  <!-- WEB -->
-  <input id="url" placeholder="https://example.com">
-  <button onclick="openSite()">Open</button>
-  <button onclick="generateQR()">QR</button>
-  <canvas id="qrcode"></canvas>
+<!-- 💻 HTML RUNNER -->
+<textarea id="code" placeholder="<h1>Hello World</h1>"></textarea>
+<br>
 
-  <hr>
+<button onclick="runHTML()">▶ Run HTML</button>
+<button onclick="clearFrame()">🧹 Clear</button>
 
-  <!-- HTML / JS -->
-  <textarea id="htmlCode" placeholder="HTML"></textarea>
-  <button onclick="runHTML()">Run HTML</button>
-
-  <textarea id="jsCode" placeholder="JS"></textarea>
-  <button onclick="runJS()">Run JS</button>
-
-  <iframe id="preview"></iframe>
-
-  <hr>
-
-  <!-- FILE -->
-  <input type="file" onchange="uploadFile(event)">
-
-  <hr>
-
-  <!-- EDIT -->
-  <button onclick="enableEdit()">Edit Page</button>
-  <button onclick="enableHighlight()">Highlight</button>
-
-</div>
+<!-- OUTPUT -->
+<iframe id="preview"></iframe>
 
 <script>
 
-// ✅ SAME DOMAIN API
-const API_URL = "/ai";
-
-// ===== CHAT =====
-async function send(textOverride){
-  const input = document.getElementById("input");
-  const text = textOverride || input.value;
-  if(!text) return;
-
-  addMsg("You: " + text, "user");
-
-  const res = await fetch(API_URL,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({prompt:text})
-  });
-
-  const data = await res.json();
-  const reply = data.result || "Error";
-
-  addMsg("AI: " + reply, "ai");
-  speak(reply);
-
-  input.value="";
+// ===== OPEN IN NEW TAB =====
+function openSite(){
+  let url = document.getElementById("url").value;
+  if(!url.startsWith("http")) url = "https://" + url;
+  window.open(url, "_blank");
 }
 
-function addMsg(text,type){
-  const div=document.createElement("div");
-  div.className="msg "+type;
-  div.innerText=text;
-  chat.appendChild(div);
-  chat.scrollTop = chat.scrollHeight;
+// ===== EMBED INTERNET SITE (SAFE MODE) =====
+function embedSite(){
+  let url = document.getElementById("url").value;
+  if(!url.startsWith("http")) url = "https://" + url;
+
+  document.getElementById("preview").src = url;
 }
 
-// ===== VOICE =====
-function speak(t){
-  speechSynthesis.speak(new SpeechSynthesisUtterance(t));
+// ===== RUN HTML CODE LOCALLY =====
+function runHTML(){
+  const code = document.getElementById("code").value;
+
+  const iframe = document.getElementById("preview");
+  iframe.srcdoc = code;
 }
 
-function startVoice(){
-  const SR=window.SpeechRecognition||webkitSpeechRecognition;
-  const r=new SR();
-  r.start();
-  r.onresult=e=>{
-    send(e.results[0][0].transcript);
-  };
-}
-
-function startVoiceContinuous(){
-  const SR=window.SpeechRecognition||webkitSpeechRecognition;
-  const r=new SR();
-  r.continuous=true;
-  r.onresult=e=>{
-    send(e.results[e.results.length-1][0].transcript);
-  };
-  r.start();
-}
-
-// ===== WEB =====
-function fixURL(u){return u.startsWith("http")?u:"https://"+u;}
-function openSite(){window.open(fixURL(url.value));}
-function generateQR(){QRCode.toCanvas(qrcode,fixURL(url.value));}
-
-// ===== CODE =====
-function runHTML(){preview.srcdoc=htmlCode.value;}
-function runJS(){try{new Function(jsCode.value)();}catch(e){alert(e);}}
-
-// ===== FILE =====
-function uploadFile(e){
-  const f=e.target.files[0];
-  const r=new FileReader();
-  r.onload=async()=>{
-    const res=await fetch(API_URL,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({prompt:"Explain this:\n"+r.result})
-    });
-    const data=await res.json();
-    alert(data.result);
-  };
-  r.readAsText(f);
-}
-
-// ===== EDIT =====
-function enableEdit(){document.body.contentEditable=true;}
-function enableHighlight(){
-  document.addEventListener("mouseup",()=>{
-    let s=getSelection();
-    if(s.rangeCount){
-      let span=document.createElement("span");
-      span.style.background="yellow";
-      try{s.getRangeAt(0).surroundContents(span);}catch(e){}
-    }
-  });
+// ===== CLEAR =====
+function clearFrame(){
+  document.getElementById("preview").srcdoc = "";
+  document.getElementById("preview").src = "";
 }
 
 </script>
