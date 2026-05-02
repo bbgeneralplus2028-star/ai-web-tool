@@ -1,172 +1,78 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>AI FULL SYSTEM (STABLE BUILD)</title>
-
-  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <title>AI Browser</title>
 
   <style>
-    body { font-family: Arial; text-align: center; padding: 15px; }
-    input, textarea { width: 90%; padding: 10px; margin: 5px; }
-    button { padding: 10px; margin: 5px; cursor: pointer; }
-    iframe { width: 95%; height: 300px; border: 2px solid black; margin-top: 10px; }
-    #output { white-space: pre-wrap; text-align: left; margin-top: 10px; }
+    body { font-family: Arial; text-align: center; padding: 20px; background:#111; color:white; }
+    input { width: 80%; padding: 10px; }
+    button { padding: 10px 15px; margin: 5px; }
+    #chat { margin-top: 20px; text-align: left; max-width: 600px; margin-left:auto; margin-right:auto; }
+    .msg { padding: 10px; margin: 5px; border-radius: 8px; }
+    .user { background:#333; }
+    .ai { background:#1e3a8a; }
   </style>
 </head>
 
 <body>
 
-<h2>🚀 AI FULL SYSTEM (SAFE MERGED BUILD)</h2>
+<h2>🤖 AI Browser Chat</h2>
 
-<!-- ================= AI ================= -->
-<input id="input" placeholder="Ask AI...">
+<input id="msg" placeholder="Ask AI...">
 <br>
-<button onclick="send()">Send AI</button>
-<div id="output"></div>
 
-<hr>
+<button onclick="send()">Send</button>
 
-<!-- ================= WEB ================= -->
-<input id="url" placeholder="https://example.com">
-<br>
-<button onclick="openSite()">🌍 Open Website</button>
-<button onclick="embedSite()">📱 Embed Site</button>
-
-<hr>
-
-<!-- ================= HTML RUNNER ================= -->
-<textarea id="code" placeholder="<h1>Hello World</h1>"></textarea>
-<br>
-<button onclick="runHTML()">▶ Run HTML</button>
-<button onclick="clearFrame()">🧹 Clear</button>
-
-<hr>
-
-<!-- ================= QR SYSTEM ================= -->
-<input id="qrInput" placeholder="Enter URL or AI mode">
-<br>
-<button onclick="generateNormalQR()">🌐 Normal QR</button>
-<button onclick="generateAIQR()">🤖 AI QR</button>
-
-<canvas id="qrcode"></canvas>
-<p id="qrInfo"></p>
-
-<hr>
-
-<!-- OUTPUT FRAME -->
-<iframe id="preview"></iframe>
+<div id="chat"></div>
 
 <script>
 
-// =====================
-// 🔵 AI BACKEND CALL
-// =====================
-const API_URL = "/ai";
+// ======================
+// 🔗 YOUR BACKEND (Render)
+// ======================
+const API_URL = "/ai"; 
+// OR: "https://your-app.onrender.com/ai"
 
+// ======================
+// 💬 ADD MESSAGE
+// ======================
+function addMsg(text, type){
+  const div = document.createElement("div");
+  div.className = "msg " + type;
+  div.innerText = text;
+  document.getElementById("chat").appendChild(div);
+}
+
+// ======================
+// 🤖 SEND TO AI
+// ======================
 async function send(){
-  const text = document.getElementById("input").value;
+  const input = document.getElementById("msg");
+  const text = input.value;
 
-  if(!text){
-    alert("Type something first");
-    return;
-  }
+  if(!text) return;
 
-  document.getElementById("output").innerText = "⏳ Thinking...";
+  addMsg("You: " + text, "user");
+  input.value = "";
+
+  addMsg("AI: thinking...", "ai");
 
   try {
-    const res = await fetch(API_URL,{
+    const res = await fetch(API_URL, {
       method:"POST",
       headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({prompt:text})
+      body: JSON.stringify({ prompt: text })
     });
 
     const data = await res.json();
 
-    document.getElementById("output").innerText =
-      "🤖 AI:\n" + (data.result || "No response");
+    // remove "thinking..."
+    document.querySelectorAll(".ai")[document.querySelectorAll(".ai").length-1]
+      .innerText = "AI: " + (data.result || "No response");
 
   } catch(err){
-    document.getElementById("output").innerText =
-      "❌ Error:\n" + err.message;
+    addMsg("Error: " + err.message, "ai");
   }
-}
-
-// =====================
-// 🌐 WEBSITE OPEN
-// =====================
-function fixURL(u){
-  if(!u) return "";
-  return u.startsWith("http") ? u : "https://" + u;
-}
-
-function openSite(){
-  let url = document.getElementById("url").value;
-  url = fixURL(url);
-
-  if(!url){
-    alert("Enter URL");
-    return;
-  }
-
-  const win = window.open(url, "_blank");
-
-  if(!win){
-    window.location.href = url;
-  }
-}
-
-// =====================
-// 📱 EMBED SITE
-// =====================
-function embedSite(){
-  let url = document.getElementById("url").value;
-  url = fixURL(url);
-
-  document.getElementById("preview").src = url;
-}
-
-// =====================
-// 💻 RUN HTML
-// =====================
-function runHTML(){
-  const code = document.getElementById("code").value;
-  document.getElementById("preview").srcdoc = code;
-}
-
-function clearFrame(){
-  document.getElementById("preview").src = "";
-  document.getElementById("preview").srcdoc = "";
-}
-
-// =====================
-// 📷 QR NORMAL
-// =====================
-function generateNormalQR(){
-  let url = document.getElementById("qrInput").value;
-
-  if(!url){
-    alert("Enter URL");
-    return;
-  }
-
-  url = fixURL(url);
-
-  QRCode.toCanvas(document.getElementById("qrcode"), url);
-
-  document.getElementById("qrInfo").innerText =
-    "🌐 Normal QR → Opens website";
-}
-
-// =====================
-// 🤖 QR AI MODE
-// =====================
-function generateAIQR(){
-  const aiLink = "https://ai-web-tool-1.onrender.com/ai-mode";
-
-  QRCode.toCanvas(document.getElementById("qrcode"), aiLink);
-
-  document.getElementById("qrInfo").innerText =
-    "🤖 AI QR → Opens AI Assistant Mode";
 }
 
 </script>
