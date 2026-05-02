@@ -6,15 +6,58 @@
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 
   <style>
-    body { font-family: Arial; text-align: center; padding: 15px; background:#111; color:white; }
-    input, textarea, select { width: 90%; padding: 10px; margin: 5px; border-radius:6px; border:none; }
-    button { padding: 10px; margin: 5px; cursor:pointer; border-radius:6px; }
-    iframe { width: 95%; height: 280px; border: 2px solid #444; margin-top: 10px; }
-    #chat { max-width:600px; margin:auto; text-align:left; }
-    .msg { padding:8px; margin:5px; border-radius:6px; }
+    body {
+      font-family: Arial;
+      text-align: center;
+      padding: 15px;
+      background:#111;
+      color:white;
+    }
+
+    input, textarea, select {
+      width: 90%;
+      padding: 10px;
+      margin: 6px;
+      border-radius:6px;
+      border:none;
+    }
+
+    button {
+      padding: 10px;
+      margin: 6px;
+      cursor:pointer;
+      border-radius:6px;
+    }
+
+    iframe {
+      width: 95%;
+      height: 280px;
+      border: 2px solid #444;
+      margin-top: 10px;
+    }
+
+    #chat {
+      max-width:600px;
+      margin:auto;
+      text-align:left;
+    }
+
+    .msg {
+      padding:8px;
+      margin:5px;
+      border-radius:6px;
+    }
+
     .user { background:#333; }
     .ai { background:#1e3a8a; }
-    pre { text-align:left; white-space:pre-wrap; background:#000; padding:10px; border-radius:6px; }
+
+    pre {
+      text-align:left;
+      white-space:pre-wrap;
+      background:#000;
+      padding:10px;
+      border-radius:6px;
+    }
   </style>
 </head>
 
@@ -22,15 +65,16 @@
 
 <h2>🚀 AI FULL SYSTEM PRO</h2>
 
-<!-- AI CHAT -->
+<!-- ================= AI CHAT ================= -->
 <div id="chat"></div>
+
 <input id="msg" placeholder="Ask AI...">
 <br>
 <button onclick="sendAI()">Send AI</button>
 
 <hr>
 
-<!-- WEB TOOL -->
+<!-- ================= WEB ================= -->
 <input id="url" placeholder="https://example.com">
 <br>
 <button onclick="openSite()">🌍 Open</button>
@@ -38,7 +82,7 @@
 
 <hr>
 
-<!-- HTML RUNNER -->
+<!-- ================= HTML RUNNER ================= -->
 <textarea id="htmlCode" placeholder="<h1>Hello</h1>"></textarea>
 <br>
 <button onclick="runHTML()">▶ Run HTML</button>
@@ -46,20 +90,21 @@
 
 <hr>
 
-<!-- QR -->
+<!-- ================= QR ================= -->
 <input id="qrInput" placeholder="Enter URL">
 <br>
 <button onclick="qrNormal()">🌐 QR</button>
 <button onclick="qrAI()">🤖 AI QR</button>
+
 <canvas id="qr"></canvas>
 <p id="qrInfo"></p>
 
 <hr>
 
-<!-- API TESTER -->
+<!-- ================= API TESTER ================= -->
 <h3>🧪 API TESTER (My Postman)</h3>
 
-<input id="apiUrl" placeholder="/ai OR full https:// URL">
+<input id="apiUrl" placeholder="/ai OR https://your-api.com">
 
 <select id="method">
   <option>POST</option>
@@ -74,6 +119,7 @@
 
 <hr>
 
+<!-- ================= OUTPUT ================= -->
 <iframe id="preview"></iframe>
 
 <script>
@@ -102,7 +148,7 @@ async function sendAI(){
     });
 
     const data=await res.json();
-    addMsg("AI: "+(data.result||"No response"),"ai");
+    addMsg("AI: "+(data.result || "No response"),"ai");
 
   }catch(e){
     addMsg("Error: "+e.message,"ai");
@@ -117,13 +163,12 @@ function fix(u){
 }
 
 function openSite(){
-  let u = fix(document.getElementById("url").value);
-  window.open(u,"_blank");
+  window.open(fix(document.getElementById("url").value),"_blank");
 }
 
 function embedSite(){
-  let u = fix(document.getElementById("url").value);
-  document.getElementById("preview").src = u;
+  document.getElementById("preview").src =
+    fix(document.getElementById("url").value);
 }
 
 // ================= HTML =================
@@ -133,8 +178,9 @@ function runHTML(){
 }
 
 function clearFrame(){
-  document.getElementById("preview").src = "";
-  document.getElementById("preview").srcdoc = "";
+  const frame = document.getElementById("preview");
+  frame.src = "";
+  frame.srcdoc = "";
 }
 
 // ================= QR =================
@@ -165,7 +211,7 @@ async function sendRequest(){
   output.innerText = "⏳ Sending...";
 
   try{
-    // ✅ Allow BOTH /ai and full URLs
+    // ✅ Allow relative (/ai) or full URL
     if(!url.startsWith("/")){
       new URL(url);
     }
@@ -188,17 +234,20 @@ async function sendRequest(){
 
     const res = await fetch(url, options);
 
-    const text = await res.text();
-
+    // ✅ CLEAN JSON OUTPUT (FIXED BUG)
+    let data;
     try{
-      const json = JSON.parse(text);
-      output.innerText =
-        "✅ STATUS: " + res.status + "\n\n" +
-        JSON.stringify(json,null,2);
+      data = await res.json();
     } catch{
+      const text = await res.text();
       output.innerText =
         "⚠️ Non-JSON Response:\n\n" + text;
+      return;
     }
+
+    output.innerText =
+      "✅ STATUS: " + res.status + "\n\n" +
+      JSON.stringify(data, null, 2);
 
   } catch(err){
     output.innerText = "❌ ERROR:\n" + err.message;
