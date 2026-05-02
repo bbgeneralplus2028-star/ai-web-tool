@@ -1,26 +1,26 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>AI FULL SYSTEM + API TESTER</title>
+  <title>AI FULL SYSTEM PRO</title>
 
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 
   <style>
     body { font-family: Arial; text-align: center; padding: 15px; background:#111; color:white; }
-    input, textarea, select { width: 90%; padding: 10px; margin: 5px; }
-    button { padding: 10px; margin: 5px; cursor:pointer; }
+    input, textarea, select { width: 90%; padding: 10px; margin: 5px; border-radius:6px; border:none; }
+    button { padding: 10px; margin: 5px; cursor:pointer; border-radius:6px; }
     iframe { width: 95%; height: 280px; border: 2px solid #444; margin-top: 10px; }
     #chat { max-width:600px; margin:auto; text-align:left; }
     .msg { padding:8px; margin:5px; border-radius:6px; }
     .user { background:#333; }
     .ai { background:#1e3a8a; }
-    pre { text-align:left; white-space:pre-wrap; }
+    pre { text-align:left; white-space:pre-wrap; background:#000; padding:10px; border-radius:6px; }
   </style>
 </head>
 
 <body>
 
-<h2>🚀 AI FULL SYSTEM (ALL-IN-ONE)</h2>
+<h2>🚀 AI FULL SYSTEM PRO</h2>
 
 <!-- ================= AI CHAT ================= -->
 <div id="chat"></div>
@@ -58,23 +58,17 @@
 
 <hr>
 
-<!-- ================= API TESTER (POSTMAN) ================= -->
+<!-- ================= API TESTER ================= -->
 <h3>🧪 API TESTER (My Postman)</h3>
 
-<input id="apiUrl" placeholder="https://your-app.onrender.com/ai">
-
-<br>
+<input id="apiUrl" placeholder="https://ai-web-tool-1.onrender.com/ai">
 
 <select id="method">
   <option>POST</option>
   <option>GET</option>
 </select>
 
-<br>
-
 <textarea id="body" placeholder='{"prompt":"hello"}'></textarea>
-
-<br>
 
 <button onclick="sendRequest()">🚀 Send Request</button>
 
@@ -98,83 +92,117 @@ function addMsg(text,type){
 }
 
 async function sendAI(){
-  const text=document.getElementById("msg").value;
+  const text=document.getElementById("msg").value.trim();
   if(!text) return;
 
   addMsg("You: "+text,"user");
 
-  const res=await fetch(API_URL,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({prompt:text})
-  });
+  try{
+    const res=await fetch(API_URL,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({prompt:text})
+    });
 
-  const data=await res.json();
+    const data=await res.json();
+    addMsg("AI: "+(data.result||"No response"),"ai");
 
-  addMsg("AI: "+(data.result||"error"),"ai");
+  }catch(e){
+    addMsg("Error: "+e.message,"ai");
+  }
 }
 
 // ================= WEB =================
 function fix(u){
-  return u.startsWith("http")?u:"https://"+u;
+  u = u.trim();
+  if(!u.startsWith("http")) u = "https://" + u;
+  return u;
 }
 
 function openSite(){
-  let u=fix(document.getElementById("url").value);
+  let u = fix(document.getElementById("url").value);
   window.open(u,"_blank");
 }
 
 function embedSite(){
-  let u=fix(document.getElementById("url").value);
-  document.getElementById("preview").src=u;
+  let u = fix(document.getElementById("url").value);
+  document.getElementById("preview").src = u;
 }
 
-// ================= HTML RUN =================
+// ================= HTML =================
 function runHTML(){
   document.getElementById("preview").srcdoc =
     document.getElementById("htmlCode").value;
 }
 
 function clearFrame(){
-  document.getElementById("preview").src="";
-  document.getElementById("preview").srcdoc="";
+  document.getElementById("preview").src = "";
+  document.getElementById("preview").srcdoc = "";
 }
 
 // ================= QR =================
 function qrNormal(){
-  let u=fix(document.getElementById("qrInput").value);
+  let u = fix(document.getElementById("qrInput").value);
   QRCode.toCanvas(document.getElementById("qr"),u);
   document.getElementById("qrInfo").innerText="🌐 Normal QR";
 }
 
 function qrAI(){
-  let u="https://your-app.onrender.com/ai-mode";
+  let u = window.location.origin + "/ai-mode";
   QRCode.toCanvas(document.getElementById("qr"),u);
   document.getElementById("qrInfo").innerText="🤖 AI QR Mode";
 }
 
 // ================= API TESTER =================
 async function sendRequest(){
-  const url=document.getElementById("apiUrl").value;
-  const method=document.getElementById("method").value;
-  const body=document.getElementById("body").value;
+  let url = document.getElementById("apiUrl").value.trim();
+  const method = document.getElementById("method").value;
+  let bodyText = document.getElementById("body").value.trim();
+  const output = document.getElementById("response");
 
-  document.getElementById("response").innerText="Loading...";
+  if(!url){
+    output.innerText = "❌ Enter URL";
+    return;
+  }
+
+  output.innerText = "⏳ Sending...";
 
   try{
-    const res=await fetch(url,{
-      method:method,
-      headers:{"Content-Type":"application/json"},
-      body: method==="POST"?body:null
-    });
+    // ✅ Validate URL
+    new URL(url);
 
-    const data=await res.json();
+    let options = {
+      method: method,
+      headers: {"Content-Type":"application/json"}
+    };
 
-    document.getElementById("response").innerText=
-      "STATUS: "+res.status+"\n\n"+JSON.stringify(data,null,2);
+    // ✅ Validate JSON BEFORE sending
+    if(method !== "GET" && bodyText){
+      try{
+        JSON.parse(bodyText);
+        options.body = bodyText;
+      } catch(e){
+        output.innerText = "❌ Invalid JSON:\n" + e.message;
+        return;
+      }
+    }
 
-  }catch(e){
-    document.getElementById("response").innerText="ERROR: "+e.message;
+    const res = await fetch(url, options);
+
+    const text = await res.text();
+
+    try{
+      const json = JSON.parse(text);
+      output.innerText =
+        "✅ STATUS: " + res.status + "\n\n" +
+        JSON.stringify(json,null,2);
+    } catch{
+      output.innerText =
+        "⚠️ Non-JSON Response:\n\n" + text;
+    }
+
+  } catch(err){
+    output.innerText = "❌ ERROR:\n" + err.message;
   }
 }
 
