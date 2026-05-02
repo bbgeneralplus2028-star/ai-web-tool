@@ -87,7 +87,9 @@ app.get("/health", (req, res) => {
     time: new Date().toISOString()
   });
 });
-
+app.get("/ai", (req, res) => {
+  res.send("🤖 AI endpoint is working. Use POST to interact.");
+});
 // =====================
 // 🚀 START SERVER
 // =====================
