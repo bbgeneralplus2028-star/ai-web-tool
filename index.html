@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>AI Web Runner FIXED</title>
+  <title>AI FULL SYSTEM (STABLE BUILD)</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 
   <style>
-    body { font-family: Arial; text-align: center; padding: 20px; }
+    body { font-family: Arial; text-align: center; padding: 15px; }
     input, textarea { width: 90%; padding: 10px; margin: 5px; }
-    button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+    button { padding: 10px; margin: 5px; cursor: pointer; }
     iframe { width: 95%; height: 300px; border: 2px solid black; margin-top: 10px; }
     #output { white-space: pre-wrap; text-align: left; margin-top: 10px; }
   </style>
@@ -14,90 +16,157 @@
 
 <body>
 
-<h2>🌐 HTML + AI Web Runner (FIXED)</h2>
+<h2>🚀 AI FULL SYSTEM (SAFE MERGED BUILD)</h2>
 
-<!-- 🌍 URL INPUT -->
+<!-- ================= AI ================= -->
+<input id="input" placeholder="Ask AI...">
+<br>
+<button onclick="send()">Send AI</button>
+<div id="output"></div>
+
+<hr>
+
+<!-- ================= WEB ================= -->
 <input id="url" placeholder="https://example.com">
 <br>
-
 <button onclick="openSite()">🌍 Open Website</button>
 <button onclick="embedSite()">📱 Embed Site</button>
 
 <hr>
 
-<!-- 💻 HTML RUNNER -->
+<!-- ================= HTML RUNNER ================= -->
 <textarea id="code" placeholder="<h1>Hello World</h1>"></textarea>
 <br>
-
 <button onclick="runHTML()">▶ Run HTML</button>
 <button onclick="clearFrame()">🧹 Clear</button>
 
 <hr>
 
-<!-- OUTPUT -->
-<iframe id="preview"></iframe>
+<!-- ================= QR SYSTEM ================= -->
+<input id="qrInput" placeholder="Enter URL or AI mode">
+<br>
+<button onclick="generateNormalQR()">🌐 Normal QR</button>
+<button onclick="generateAIQR()">🤖 AI QR</button>
 
-<div id="output"></div>
+<canvas id="qrcode"></canvas>
+<p id="qrInfo"></p>
+
+<hr>
+
+<!-- OUTPUT FRAME -->
+<iframe id="preview"></iframe>
 
 <script>
 
-// ===============================
-// 🔧 FIXED URL HANDLER
-// ===============================
+// =====================
+// 🔵 AI BACKEND CALL
+// =====================
+const API_URL = "/ai";
+
+async function send(){
+  const text = document.getElementById("input").value;
+
+  if(!text){
+    alert("Type something first");
+    return;
+  }
+
+  document.getElementById("output").innerText = "⏳ Thinking...";
+
+  try {
+    const res = await fetch(API_URL,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({prompt:text})
+    });
+
+    const data = await res.json();
+
+    document.getElementById("output").innerText =
+      "🤖 AI:\n" + (data.result || "No response");
+
+  } catch(err){
+    document.getElementById("output").innerText =
+      "❌ Error:\n" + err.message;
+  }
+}
+
+// =====================
+// 🌐 WEBSITE OPEN
+// =====================
 function fixURL(u){
   if(!u) return "";
   return u.startsWith("http") ? u : "https://" + u;
 }
 
-// ===============================
-// 🌍 OPEN WEBSITE (FIXED)
-// ===============================
 function openSite(){
-  const urlInput = document.getElementById("url");
-  let url = fixURL(urlInput.value);
+  let url = document.getElementById("url").value;
+  url = fixURL(url);
 
   if(!url){
-    alert("Please enter a website URL");
+    alert("Enter URL");
     return;
   }
 
   const win = window.open(url, "_blank");
 
-  // fallback if popup blocked
   if(!win){
     window.location.href = url;
   }
 }
 
-// ===============================
-// 📱 EMBED WEBSITE
-// ===============================
+// =====================
+// 📱 EMBED SITE
+// =====================
 function embedSite(){
-  const url = document.getElementById("url").value;
-  const fixed = fixURL(url);
+  let url = document.getElementById("url").value;
+  url = fixURL(url);
 
-  if(!fixed){
-    alert("Enter a valid URL");
-    return;
-  }
-
-  document.getElementById("preview").src = fixed;
+  document.getElementById("preview").src = url;
 }
 
-// ===============================
+// =====================
 // 💻 RUN HTML
-// ===============================
+// =====================
 function runHTML(){
   const code = document.getElementById("code").value;
   document.getElementById("preview").srcdoc = code;
 }
 
-// ===============================
-// 🧹 CLEAR
-// ===============================
 function clearFrame(){
-  document.getElementById("preview").srcdoc = "";
   document.getElementById("preview").src = "";
+  document.getElementById("preview").srcdoc = "";
+}
+
+// =====================
+// 📷 QR NORMAL
+// =====================
+function generateNormalQR(){
+  let url = document.getElementById("qrInput").value;
+
+  if(!url){
+    alert("Enter URL");
+    return;
+  }
+
+  url = fixURL(url);
+
+  QRCode.toCanvas(document.getElementById("qrcode"), url);
+
+  document.getElementById("qrInfo").innerText =
+    "🌐 Normal QR → Opens website";
+}
+
+// =====================
+// 🤖 QR AI MODE
+// =====================
+function generateAIQR(){
+  const aiLink = "https://ai-web-tool-1.onrender.com/ai-mode";
+
+  QRCode.toCanvas(document.getElementById("qrcode"), aiLink);
+
+  document.getElementById("qrInfo").innerText =
+    "🤖 AI QR → Opens AI Assistant Mode";
 }
 
 </script>
