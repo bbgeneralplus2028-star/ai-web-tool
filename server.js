@@ -3,24 +3,49 @@ const cors = require("cors");
 const path = require("path");
 require("dotenv").config();
 
-const app = express();
+const app = express(); // ✅ MUST BE FIRST
+
 app.use(cors());
 app.use(express.json());
-
-// ✅ SERVE FRONTEND
 app.use(express.static(__dirname));
 
+// =========================
+// 🌐 HOME PAGE
+// =========================
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// ===== AI ENDPOINT =====
+// =========================
+// 🤖 AI MODE PAGE (QR TARGET)
+// =========================
+app.get("/ai-mode", (req, res) => {
+  res.send(`
+    <h1>🤖 AI Assistant Ready</h1>
+    <p>Open your AI app or shortcut:</p>
+
+    <a href="shortcuts://run-shortcut?name=AI Assistant">
+      ▶ Open in Siri Shortcuts
+    </a>
+
+    <br><br>
+
+    <a href="/">⬅ Open AI Web App</a>
+  `);
+});
+
+// =========================
+// 🤖 AI ENDPOINT
+// =========================
 app.post("/ai", async (req, res) => {
   try {
     const { prompt } = req.body;
 
-    // ⚠️ REPLACE WITH YOUR OPENAI KEY
     const OPENAI_KEY = process.env.OPENAI_KEY;
+
+    if (!OPENAI_KEY) {
+      return res.status(500).json({ error: "Missing OPENAI_KEY" });
+    }
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -48,13 +73,18 @@ app.post("/ai", async (req, res) => {
   }
 });
 
-// ===== HEALTH CHECK =====
+// =========================
+// ❤️ HEALTH CHECK
+// =========================
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-// ===== START SERVER =====
+// =========================
+// 🚀 START SERVER
+// =========================
 const PORT = process.env.PORT || 10000;
+
 app.listen(PORT, () => {
-  console.log("✅ Full AI App Running on port", PORT);
+  console.log("✅ AI Server running on port", PORT);
 });
