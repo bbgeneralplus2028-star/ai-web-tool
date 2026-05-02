@@ -1,28 +1,29 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>AI Web Runner Test</title>
+  <title>AI Web Runner FIXED</title>
 
   <style>
-    body { font-family: sans-serif; text-align: center; padding: 20px; }
-    textarea, input { width: 90%; padding: 10px; margin: 5px; }
+    body { font-family: Arial; text-align: center; padding: 20px; }
+    input, textarea { width: 90%; padding: 10px; margin: 5px; }
+    button { padding: 10px 15px; margin: 5px; cursor: pointer; }
     iframe { width: 95%; height: 300px; border: 2px solid black; margin-top: 10px; }
-    button { padding: 10px 15px; margin: 5px; }
+    #output { white-space: pre-wrap; text-align: left; margin-top: 10px; }
   </style>
 </head>
 
 <body>
 
-<h2>🧪 HTML + Web Runner Test</h2>
+<h2>🌐 HTML + AI Web Runner (FIXED)</h2>
 
-<!-- 🌐 INTERNET URL -->
+<!-- 🌍 URL INPUT -->
 <input id="url" placeholder="https://example.com">
 <br>
 
 <button onclick="openSite()">🌍 Open Website</button>
 <button onclick="embedSite()">📱 Embed Site</button>
 
-<br><br>
+<hr>
 
 <!-- 💻 HTML RUNNER -->
 <textarea id="code" placeholder="<h1>Hello World</h1>"></textarea>
@@ -31,35 +32,69 @@
 <button onclick="runHTML()">▶ Run HTML</button>
 <button onclick="clearFrame()">🧹 Clear</button>
 
+<hr>
+
 <!-- OUTPUT -->
 <iframe id="preview"></iframe>
 
+<div id="output"></div>
+
 <script>
 
-// ===== OPEN IN NEW TAB =====
+// ===============================
+// 🔧 FIXED URL HANDLER
+// ===============================
+function fixURL(u){
+  if(!u) return "";
+  return u.startsWith("http") ? u : "https://" + u;
+}
+
+// ===============================
+// 🌍 OPEN WEBSITE (FIXED)
+// ===============================
 function openSite(){
-  let url = document.getElementById("url").value;
-  if(!url.startsWith("http")) url = "https://" + url;
-  window.open(url, "_blank");
+  const urlInput = document.getElementById("url");
+  let url = fixURL(urlInput.value);
+
+  if(!url){
+    alert("Please enter a website URL");
+    return;
+  }
+
+  const win = window.open(url, "_blank");
+
+  // fallback if popup blocked
+  if(!win){
+    window.location.href = url;
+  }
 }
 
-// ===== EMBED INTERNET SITE (SAFE MODE) =====
+// ===============================
+// 📱 EMBED WEBSITE
+// ===============================
 function embedSite(){
-  let url = document.getElementById("url").value;
-  if(!url.startsWith("http")) url = "https://" + url;
+  const url = document.getElementById("url").value;
+  const fixed = fixURL(url);
 
-  document.getElementById("preview").src = url;
+  if(!fixed){
+    alert("Enter a valid URL");
+    return;
+  }
+
+  document.getElementById("preview").src = fixed;
 }
 
-// ===== RUN HTML CODE LOCALLY =====
+// ===============================
+// 💻 RUN HTML
+// ===============================
 function runHTML(){
   const code = document.getElementById("code").value;
-
-  const iframe = document.getElementById("preview");
-  iframe.srcdoc = code;
+  document.getElementById("preview").srcdoc = code;
 }
 
-// ===== CLEAR =====
+// ===============================
+// 🧹 CLEAR
+// ===============================
 function clearFrame(){
   document.getElementById("preview").srcdoc = "";
   document.getElementById("preview").src = "";
